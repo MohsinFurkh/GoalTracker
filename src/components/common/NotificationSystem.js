@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Alert, Snackbar, Stack } from '@mui/material';
 
-// Create a context for managing notifications
+// Create a notification context
 const NotificationContext = createContext();
 
 /**
@@ -10,11 +10,24 @@ const NotificationContext = createContext();
  */
 
 /**
- * Provider component that wraps the application to provide notification functionality
+ * Custom hook to use notifications
+ * @returns {Object} Notification methods
+ */
+export function useNotification() {
+  return useContext(NotificationContext);
+}
+
+/**
+ * Notification provider component
+ * @param {React.ReactNode} children - The children components to wrap
+ * @returns {React.ReactNode} - The wrapped components
  */
 export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
-
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [severity, setSeverity] = useState('info'); // 'error', 'warning', 'info', 'success'
+  
   /**
    * Show a notification
    * @param {string} message - The notification message
@@ -51,22 +64,49 @@ export function NotificationProvider({ children }) {
   };
 
   // Convenience methods for different notification types
-  const showSuccess = (message, duration) => showNotification(message, 'success', duration);
-  const showError = (message, duration) => showNotification(message, 'error', duration);
-  const showWarning = (message, duration) => showNotification(message, 'warning', duration);
-  const showInfo = (message, duration) => showNotification(message, 'info', duration);
+  const showSuccess = (msg) => {
+    setMessage(msg);
+    setSeverity('success');
+    setOpen(true);
+  };
+  
+  const showError = (msg) => {
+    setMessage(msg);
+    setSeverity('error');
+    setOpen(true);
+  };
+  
+  const showInfo = (msg) => {
+    setMessage(msg);
+    setSeverity('info');
+    setOpen(true);
+  };
+  
+  const showWarning = (msg) => {
+    setMessage(msg);
+    setSeverity('warning');
+    setOpen(true);
+  };
 
+  // Close notification handler
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpen(false);
+  };
+
+  // Value to provide to consumers
+  const value = {
+    showSuccess,
+    showError,
+    showInfo,
+    showWarning,
+    closeNotification,
+  };
+  
   return (
-    <NotificationContext.Provider
-      value={{
-        showNotification,
-        showSuccess,
-        showError,
-        showWarning,
-        showInfo,
-        closeNotification,
-      }}
-    >
+    <NotificationContext.Provider value={value}>
       {children}
       
       {/* Notification Stack */}
@@ -89,20 +129,21 @@ export function NotificationProvider({ children }) {
           </Snackbar>
         ))}
       </Stack>
+      <Snackbar 
+        open={open} 
+        autoHideDuration={6000} 
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleClose} 
+          severity={severity} 
+          variant="filled" 
+          sx={{ width: '100%' }}
+        >
+          {message}
+        </Alert>
+      </Snackbar>
     </NotificationContext.Provider>
   );
-}
-
-/**
- * Hook to use the notification system
- * @returns {Object} Notification methods
- */
-export function useNotification() {
-  const context = useContext(NotificationContext);
-  
-  if (!context) {
-    throw new Error('useNotification must be used within a NotificationProvider');
-  }
-  
-  return context;
 } 
