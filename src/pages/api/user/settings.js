@@ -1,5 +1,5 @@
 import { getSession } from 'next-auth/react';
-import { getCollection } from '../../../utils/mongodb';
+import { getCollection } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 
