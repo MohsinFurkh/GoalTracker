@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import bcrypt from 'bcryptjs';
 import { getCollection, connectToDatabase } from '../../../lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 // Create client promise for MongoDB adapter
 const clientPromise = connectToDatabase().then(({ client }) => client);
@@ -28,9 +29,9 @@ export default NextAuth({
             email: credentials.email 
           });
           
-          // If we don't have a user with this email, create a demo account
+          // If no user found with this email
           if (!user) {
-            // For first-time users, create a demo account
+            // Demo user only for specific credentials
             if (credentials.email === 'user@example.com' && credentials.password === 'password123') {
               const hashedPassword = await bcrypt.hash('password123', 10);
               const newUser = {
@@ -38,6 +39,7 @@ export default NextAuth({
                 email: 'user@example.com',
                 passwordHash: hashedPassword,
                 createdAt: new Date(),
+                updatedAt: new Date(),
               };
               
               const result = await usersCollection.insertOne(newUser);
@@ -46,6 +48,7 @@ export default NextAuth({
                 id: result.insertedId.toString(),
                 name: newUser.name,
                 email: newUser.email,
+                createdAt: newUser.createdAt,
               };
             }
             
@@ -67,6 +70,7 @@ export default NextAuth({
             id: user._id.toString(),
             name: user.name,
             email: user.email,
+            createdAt: user.createdAt,
           };
         } catch (error) {
           console.error('Authentication error:', error);
@@ -75,21 +79,28 @@ export default NextAuth({
       },
     }),
   ],
+  // Configure the MongoDB adapter to store sessions and users
   adapter: MongoDBAdapter(clientPromise),
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      // Initial sign in
       if (user) {
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.createdAt = user.createdAt;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
+      // Add user id to session
+      if (token && session.user) {
         session.user.id = token.id;
+        session.user.createdAt = token.createdAt;
       }
       return session;
     },
@@ -98,6 +109,17 @@ export default NextAuth({
     signIn: '/auth/signin',
     error: '/auth/error',
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
   debug: process.env.NODE_ENV === 'development',
+  // Events allow running code at specific points in the auth flow
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      // This runs when a user signs in
+      console.log(`User signed in: ${user.email}`);
+    },
+    async createUser({ user }) {
+      // This runs when a new user is created by NextAuth (not our API endpoint)
+      console.log(`New user created: ${user.email}`);
+    },
+  }
 }); 
