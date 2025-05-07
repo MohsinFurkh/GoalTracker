@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoalTrackr - UI Preview</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #3f51b5;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        
+        .button {
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .button-secondary {
+            background-color: white;
+            color: #3f51b5;
+            border: 1px solid #3f51b5;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .goal-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 16px;
+        }
+        
+        .goal-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #3f51b5;
+        }
+        
+        .chip {
+            display: inline-block;
+            background-color: #e0e0e0;
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .chip-success {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .chip-primary {
+            background-color: #3f51b5;
+            color: white;
+        }
+        
+        .progress-container {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #4caf50;
+            border-radius: 4px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid #3f51b5;
+            color: #3f51b5;
+        }
+        
+        .streak-display {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .streak-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .streak-item h3 {
+            font-size: 32px;
+            margin: 5px 0;
+            color: #ff9800;
+        }
+        
+        .achievement-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .achievement-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #3f51b5;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .analytics-card {
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: white;
+            margin-bottom: 20px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .stat-card h3 {
+            margin: 5px 0;
+            font-size: 32px;
+            color: #3f51b5;
+        }
+        
+        .profile-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .profile-sidebar {
+            flex: 1;
+        }
+        
+        .profile-content {
+            flex: 3;
+        }
+        
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: block;
+            background-color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>GoalTrackr</h1>
+        <div class="nav">
+            <a href="#dashboard">Dashboard</a>
+            <a href="#goals">Goals</a>
+            <a href="#tasks">Tasks</a>
+            <a href="#journal">Journal</a>
+            <a href="#analytics">Analytics</a>
+            <a href="#progress">Progress</a>
+            <a href="#profile">Profile</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <section id="dashboard">
+            <div class="section-header">
+                <h2>Dashboard</h2>
+            </div>
+            
+            <div class="stat-grid">
+                <div class="card stat-card">
+                    <p>Active Goals</p>
+                    <h3>5</h3>
+                </div>
+                <div class="card stat-card">
+                    <p>Completed Goals</p>
+                    <h3>12</h3>
+                </div>
+                <div class="card stat-card">
+                    <p>Pending Tasks</p>
+                    <h3>8</h3>
+                </div>
+                <div class="card stat-card">
+                    <p>Current Streak</p>
+                    <h3>7</h3>
+                </div>
+            </div>
+        </section>
+        
+        <section id="goals">
+            <div class="section-header">
+                <h2>Goals</h2>
+                <button class="button">New Goal</button>
+            </div>
+            
+            <div class="grid">
+                <div class="goal-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3>Complete Project Proposal</h3>
+                        <span class="chip chip-success">Completed</span>
+                    </div>
+                    <p>Deadline: June 15, 2023</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <span class="chip">Work</span>
+                        <span class="chip">Writing</span>
+                    </div>
+                </div>
+                
+                <div class="goal-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3>Learn React Hooks</h3>
+                        <span class="chip chip-primary">In Progress</span>
+                    </div>
+                    <p>Deadline: August 30, 2023</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 65%"></div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <span class="chip">Learning</span>
+                        <span class="chip">Programming</span>
+                    </div>
+                </div>
+                
+                <div class="goal-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3>Run 5K Marathon</h3>
+                        <span class="chip chip-primary">In Progress</span>
+                    </div>
+                    <p>Deadline: September 10, 2023</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 80%"></div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <span class="chip">Health</span>
+                        <span class="chip">Fitness</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="tasks">
+            <div class="section-header">
+                <h2>Tasks</h2>
+                <button class="button">New Task</button>
+            </div>
+            
+            <div class="card">
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="task1">
+                        <label for="task1" style="margin-left: 10px;">Complete Chapter 3 of React Course</label>
+                        <span style="margin-left: auto; color: #ff9800;">High Priority</span>
+                    </div>
+                    <div style="margin-left: 25px; color: #666; font-size: 14px;">
+                        Due: June 20, 2023 • Goal: Learn React Hooks
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="task2">
+                        <label for="task2" style="margin-left: 10px;">Practice running for 30 minutes</label>
+                        <span style="margin-left: auto; color: #2196f3;">Medium Priority</span>
+                    </div>
+                    <div style="margin-left: 25px; color: #666; font-size: 14px;">
+                        Due: June 18, 2023 • Goal: Run 5K Marathon
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="task3">
+                        <label for="task3" style="margin-left: 10px;">Prepare meeting agenda</label>
+                        <span style="margin-left: auto; color: #4caf50;">Low Priority</span>
+                    </div>
+                    <div style="margin-left: 25px; color: #666; font-size: 14px;">
+                        Due: June 21, 2023 • Goal: Complete Project Proposal
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="progress">
+            <div class="section-header">
+                <h2>Progress Tracking</h2>
+            </div>
+            
+            <div class="streak-display">
+                <h3 style="margin-top: 0;">Streaks</h3>
+                <div class="streak-grid">
+                    <div class="streak-item">
+                        <p>Current Streak</p>
+                        <h3>12</h3>
+                        <p>days</p>
+                    </div>
+                    <div class="streak-item">
+                        <p>Longest Streak</p>
+                        <h3>24</h3>
+                        <p>days</p>
+                    </div>
+                    <div class="streak-item">
+                        <p>Task Completion Rate</p>
+                        <h3>78%</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active">Goal Progress</div>
+                <div class="tab">Achievements</div>
+                <div class="tab">Milestones</div>
+            </div>
+            
+            <div class="grid">
+                <div class="achievement-card card">
+                    <div class="achievement-icon">★</div>
+                    <h3>Getting Started</h3>
+                    <p>Created your first goal</p>
+                    <p style="color: #666; font-size: 12px;">Unlocked on April 15, 2023</p>
+                </div>
+                
+                <div class="achievement-card card">
+                    <div class="achievement-icon">🏆</div>
+                    <h3>Goal Crusher</h3>
+                    <p>Completed 5 goals</p>
+                    <p style="color: #666; font-size: 12px;">Unlocked on June 20, 2023</p>
+                </div>
+                
+                <div class="achievement-card card" style="opacity: 0.7;">
+                    <div class="achievement-icon" style="background-color: #ccc;">✓</div>
+                    <h3>Task Master</h3>
+                    <p>Completed 50 tasks</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 82%"></div>
+                    </div>
+                    <p style="color: #666; font-size: 12px;">82% complete</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="analytics">
+            <div class="section-header">
+                <h2>Analytics & Reports</h2>
+            </div>
+            
+            <div class="analytics-card">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <p>Goals</p>
+                        <h3>5</h3>
+                        <p>2 completed</p>
+                    </div>
+                    <div class="stat-card">
+                        <p>Tasks</p>
+                        <h3>25</h3>
+                        <p>15 completed</p>
+                    </div>
+                    <div class="stat-card">
+                        <p>This Week</p>
+                        <h3>8</h3>
+                        <p>of 12 tasks</p>
+                    </div>
+                    <div class="stat-card">
+                        <p>Insights</p>
+                        <h3>60%</h3>
+                        <p>Overall completion rate</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active">Goals Analytics</div>
+                <div class="tab">Tasks Analytics</div>
+                <div class="tab">Journal Analytics</div>
+                <div class="tab">Productivity Insights</div>
+            </div>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>Goals by Status</h3>
+                    <div style="height: 200px; display: flex; align-items: center; justify-content: center; background-color: #f9f9f9;">
+                        [Pie Chart Placeholder]
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Goals by Priority</h3>
+                    <div style="height: 200px; display: flex; align-items: center; justify-content: center; background-color: #f9f9f9;">
+                        [Pie Chart Placeholder]
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="profile">
+            <div class="section-header">
+                <h2>Profile & Settings</h2>
+            </div>
+            
+            <div class="profile-container">
+                <div class="profile-sidebar card">
+                    <div style="text-align: center;">
+                        <img src="https://mui.com/static/images/avatar/1.jpg" class="avatar">
+                        <h3>John Doe</h3>
+                        <p>john.doe@example.com</p>
+                        <p style="color: #666; font-size: 12px;">Member since January 15, 2023</p>
+                    </div>
+                </div>
+                
+                <div class="profile-content card">
+                    <div class="tabs">
+                        <div class="tab active">Account</div>
+                        <div class="tab">Security</div>
+                        <div class="tab">Notifications</div>
+                        <div class="tab">Display</div>
+                        <div class="tab">Data & Privacy</div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" class="form-control" value="John Doe" disabled>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" class="form-control" value="john.doe@example.com" disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="timezone">Timezone</label>
+                            <input type="text" id="timezone" class="form-control" value="America/New_York" disabled>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="language">Language</label>
+                            <input type="text" id="language" class="form-control" value="English" disabled>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="button button-secondary">Edit Profile</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html> 
