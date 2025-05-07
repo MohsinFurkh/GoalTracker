@@ -1,45 +1,44 @@
-import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+/**
+ * Global variable to maintain the MongoDB connection across requests
+ */
+let cachedClient = null;
+let cachedDb = null;
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+/**
+ * Connect to MongoDB and return the client and database
+ * This function reuses the connection if it already exists
+ */
+export async function connectToDatabase() {
+  // If we have a cached connection, return it
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  // If no connection exists, create a new one
+  if (!process.env.MONGODB_URI) {
+    throw new Error('Please define the MONGODB_URI environment variable');
+  }
+
+  const client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  
+  const db = client.db();
+
+  // Cache the connection
+  cachedClient = client;
+  cachedDb = db;
+
+  return { client, db };
 }
 
 /**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
+ * Get a collection from the database
+ * @param {string} collectionName - The name of the collection
+ * @returns {Promise<Collection>} - The MongoDB collection
  */
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
-  }
-  
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
-
-  return cached.conn;
-}
-
-export default dbConnect; 
+export async function getCollection(collectionName) {
+  const { db } = await connectToDatabase();
+  return db.collection(collectionName);
+} 

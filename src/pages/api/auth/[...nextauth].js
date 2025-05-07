@@ -1,23 +1,11 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import bcrypt from 'bcryptjs';
+import { getCollection, connectToDatabase } from '../../../lib/mongodb';
 
 /**
- * Mock user database for demonstration
- * In production, you would connect to your MongoDB database
- */
-const users = [
-  {
-    id: '1',
-    name: 'Demo User',
-    email: 'user@example.com',
-    // Password: "password123"
-    passwordHash: '$2a$10$X7qUSfJM3/OwS6yl15h2tuXEKF7JnGDV9q84jQsj81T90JuVBLoJy',
-  },
-];
-
-/**
- * NextAuth.js configuration
+ * NextAuth.js configuration with MongoDB support
  */
 export default NextAuth({
   providers: [
@@ -28,30 +16,63 @@ export default NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // In production, you would look up the user in your database
-        const user = users.find(u => u.email === credentials.email);
-        
-        if (!user) {
+        try {
+          // Get the users collection
+          const usersCollection = await getCollection('users');
+          
+          // Look up the user in the database
+          const user = await usersCollection.findOne({ 
+            email: credentials.email 
+          });
+          
+          // If we don't have a user with this email, create a demo account
+          if (!user) {
+            // For first-time users, create a demo account
+            if (credentials.email === 'user@example.com' && credentials.password === 'password123') {
+              const hashedPassword = await bcrypt.hash('password123', 10);
+              const newUser = {
+                name: 'Demo User',
+                email: 'user@example.com',
+                passwordHash: hashedPassword,
+                createdAt: new Date(),
+              };
+              
+              const result = await usersCollection.insertOne(newUser);
+              
+              return {
+                id: result.insertedId.toString(),
+                name: newUser.name,
+                email: newUser.email,
+              };
+            }
+            
+            return null;
+          }
+          
+          // Verify the password
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.passwordHash
+          );
+          
+          if (!isPasswordValid) {
+            return null;
+          }
+          
+          // Return the user without sensitive data
+          return {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+          };
+        } catch (error) {
+          console.error('Authentication error:', error);
           return null;
         }
-        
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        );
-        
-        if (!isPasswordValid) {
-          return null;
-        }
-        
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
       },
     }),
   ],
+  adapter: MongoDBAdapter(connectToDatabase().then(({ client }) => client)),
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
