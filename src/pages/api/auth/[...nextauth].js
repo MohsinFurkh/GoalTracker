@@ -4,6 +4,9 @@ import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import bcrypt from 'bcryptjs';
 import { getCollection, connectToDatabase } from '../../../lib/mongodb';
 
+// Create client promise for MongoDB adapter
+const clientPromise = connectToDatabase().then(({ client }) => client);
+
 /**
  * NextAuth.js configuration with MongoDB support
  */
@@ -72,7 +75,7 @@ export default NextAuth({
       },
     }),
   ],
-  adapter: MongoDBAdapter(connectToDatabase().then(({ client }) => client)),
+  adapter: MongoDBAdapter(clientPromise),
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
