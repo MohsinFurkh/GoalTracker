@@ -93,8 +93,15 @@ export default function SignUp() {
     }
 
     setLoading(true);
+    console.log('Starting registration process...');
 
     try {
+      console.log('Sending signup request with data:', {
+        name: formData.name,
+        email: formData.email,
+        password: '********', // Masking password in logs
+      });
+      
       // Register user
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -108,14 +115,19 @@ export default function SignUp() {
         }),
       });
 
+      console.log('Signup API response status:', response.status);
       const data = await response.json();
+      console.log('Signup API response:', data);
 
       if (!response.ok) {
+        console.error('Registration failed:', data.error);
         setError(data.error || 'Registration failed');
         setLoading(false);
         return;
       }
 
+      console.log('Registration successful, attempting auto-login...');
+      
       // Log in the user after successful registration
       const signInResult = await signIn('credentials', {
         redirect: false,
@@ -123,10 +135,14 @@ export default function SignUp() {
         password: formData.password,
       });
 
+      console.log('SignIn result:', signInResult);
+
       if (signInResult.error) {
+        console.error('Auto-login failed:', signInResult.error);
         setError('Registration successful, but login failed. Please try logging in manually.');
         setLoading(false);
       } else {
+        console.log('Auto-login successful, redirecting to dashboard...');
         // Redirect to dashboard
         router.push('/dashboard');
       }
