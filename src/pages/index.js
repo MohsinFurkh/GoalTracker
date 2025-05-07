@@ -1,16 +1,28 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { getSession } from 'next-auth/react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 /**
- * Home page that redirects to the dashboard
+ * Home page that redirects to the signup page for new users 
+ * or dashboard for authenticated users
  */
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to dashboard
-    router.replace('/dashboard');
+    // Check if user is authenticated
+    const checkSession = async () => {
+      const session = await getSession();
+      // If authenticated, redirect to dashboard, otherwise to signup
+      if (session) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/auth/signup');
+      }
+    };
+    
+    checkSession();
   }, [router]);
 
   return (
@@ -29,8 +41,31 @@ export default function Home() {
       </Typography>
       <CircularProgress size={40} />
       <Typography variant="body1" sx={{ mt: 2 }}>
-        Loading your dashboard...
+        Redirecting to GoalTrackr...
       </Typography>
     </Box>
   );
+}
+
+// Server-side check to determine redirect
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+  
+  if (session) {
+    // User is authenticated, redirect to dashboard
+    return {
+      redirect: {
+        destination: '/dashboard',
+        permanent: false,
+      },
+    };
+  } else {
+    // User is not authenticated, redirect to signup
+    return {
+      redirect: {
+        destination: '/auth/signup',
+        permanent: false,
+      },
+    };
+  }
 } 
