@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import {
   Box,
   Grid,
@@ -18,12 +19,20 @@ import {
   Chip,
   Stack,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Menu,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
   FilterList as FilterListIcon,
   Close as CloseIcon,
+  Sort as SortIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 
 import MainLayout from '../../components/layouts/MainLayout';
@@ -38,8 +47,10 @@ export default function GoalsPage() {
   const router = useRouter();
   const theme = useTheme();
   const notification = useNotification();
+  const { data: session, status } = useSession();
   
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [goals, setGoals] = useState([]);
   const [filteredGoals, setFilteredGoals] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,74 +63,31 @@ export default function GoalsPage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
-    // Fetch goals - for demo, we'll use dummy data
-    const fetchGoals = async () => {
-      setTimeout(() => {
-        // Mock data for demonstration
-        setGoals([
-          {
-            _id: 'g1',
-            title: 'Learn React and NextJS',
-            description: 'Master React and Next.js framework for web development',
-            status: 'In Progress',
-            priority: 'High',
-            progress: 65,
-            deadline: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
-            categories: ['Learning', 'Programming'],
-          },
-          {
-            _id: 'g2',
-            title: 'Exercise Regularly',
-            description: 'Maintain a consistent workout schedule',
-            status: 'In Progress',
-            priority: 'Medium',
-            progress: 30,
-            deadline: new Date(new Date().getTime() + 60 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(new Date().getTime() - 45 * 24 * 60 * 60 * 1000),
-            categories: ['Health', 'Wellness'],
-          },
-          {
-            _id: 'g3',
-            title: 'Read 20 Books',
-            description: 'Read at least 20 books this year',
-            status: 'In Progress',
-            priority: 'Medium',
-            progress: 45,
-            deadline: new Date(new Date().getTime() + 90 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(new Date().getTime() - 60 * 24 * 60 * 60 * 1000),
-            categories: ['Learning', 'Personal'],
-          },
-          {
-            _id: 'g4',
-            title: 'Learn Spanish',
-            description: 'Achieve conversational fluency in Spanish',
-            status: 'Not Started',
-            priority: 'Low',
-            progress: 0,
-            deadline: new Date(new Date().getTime() + 180 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(new Date().getTime() - 10 * 24 * 60 * 60 * 1000),
-            categories: ['Learning', 'Language'],
-          },
-          {
-            _id: 'g5',
-            title: 'Complete Web Application',
-            description: 'Finish the GoalTrackr application',
-            status: 'Completed',
-            priority: 'High',
-            progress: 100,
-            deadline: new Date(new Date().getTime() - 5 * 24 * 60 * 60 * 1000),
-            completedDate: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(new Date().getTime() - 90 * 24 * 60 * 60 * 1000),
-            categories: ['Work', 'Programming'],
-          },
-        ]);
-        setLoading(false);
-      }, 1000);
-    };
+    if (status === 'authenticated') {
+      fetchGoals();
+    }
+  }, [status]);
 
-    fetchGoals();
-  }, []);
+  const fetchGoals = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch('/api/goals');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch goals');
+      }
+      
+      const data = await response.json();
+      setGoals(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching goals:', err);
+      setError('Failed to load goals. Please try again.');
+      setLoading(false);
+    }
+  };
 
   // Apply filters and sort whenever goals, filters, or search term changes
   useEffect(() => {
@@ -215,14 +183,20 @@ export default function GoalsPage() {
     if (!confirmDelete) return;
 
     try {
-      // In production, call API to delete goal
-      // await deleteGoal(confirmDelete._id);
+      const response = await fetch(`/api/goals/${confirmDelete._id}`, {
+        method: 'DELETE',
+      });
       
-      // Update local state for demo
+      if (!response.ok) {
+        throw new Error('Failed to delete goal');
+      }
+      
+      // Update local state
       setGoals(goals.filter(g => g._id !== confirmDelete._id));
       notification.showSuccess(`Goal "${confirmDelete.title}" deleted successfully`);
       setConfirmDelete(null);
     } catch (error) {
+      console.error('Error deleting goal:', error);
       notification.showError('Failed to delete goal');
     }
   };

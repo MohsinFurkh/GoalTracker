@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import {
   Box,
   Grid,
@@ -41,8 +42,10 @@ export default function TasksPage() {
   const router = useRouter();
   const theme = useTheme();
   const notification = useNotification();
+  const { data: session, status } = useSession();
   
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,94 +59,48 @@ export default function TasksPage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
-    // Fetch tasks and goals - for demo, we'll use dummy data
-    const fetchTasksAndGoals = async () => {
-      setTimeout(() => {
-        // Mock goals data
-        const mockGoals = [
-          {
-            _id: 'g1',
-            title: 'Learn React and NextJS',
-          },
-          {
-            _id: 'g2',
-            title: 'Exercise Regularly',
-          },
-          {
-            _id: 'g3',
-            title: 'Read 20 Books',
-          },
-        ];
-        
-        // Mock tasks data
-        const mockTasks = [
-          {
-            _id: 't1',
-            title: 'Complete dashboard implementation',
-            description: 'Finish the dashboard UI and functionality',
-            priority: 'High',
-            dueDate: new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
-            completed: false,
-            createdAt: new Date(),
-            goalId: 'g1',
-            goalTitle: 'Learn React and NextJS',
-          },
-          {
-            _id: 't2',
-            title: 'Morning run',
-            description: '30 minute run at the park',
-            priority: 'Medium',
-            dueDate: new Date(),
-            completed: true,
-            completedAt: new Date(),
-            createdAt: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000),
-            goalId: 'g2',
-            goalTitle: 'Exercise Regularly',
-          },
-          {
-            _id: 't3',
-            title: 'Create form components',
-            description: 'Build reusable form components for the application',
-            priority: 'Medium',
-            dueDate: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000),
-            completed: false,
-            createdAt: new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000),
-            goalId: 'g1',
-            goalTitle: 'Learn React and NextJS',
-          },
-          {
-            _id: 't4',
-            title: 'Read chapter 5',
-            description: 'Complete chapter 5 of "The Design of Everyday Things"',
-            priority: 'Low',
-            dueDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-            completed: false,
-            createdAt: new Date(new Date().getTime() - 3 * 24 * 60 * 60 * 1000),
-            goalId: 'g3',
-            goalTitle: 'Read 20 Books',
-          },
-          {
-            _id: 't5',
-            title: 'Implement authentication',
-            description: 'Set up authentication with NextAuth.js',
-            priority: 'High',
-            dueDate: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000),
-            completed: true,
-            completedAt: new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(new Date().getTime() - 5 * 24 * 60 * 60 * 1000),
-            goalId: 'g1',
-            goalTitle: 'Learn React and NextJS',
-          },
-        ];
-        
-        setGoals(mockGoals);
-        setTasks(mockTasks);
-        setLoading(false);
-      }, 1000);
-    };
+    if (status === 'authenticated') {
+      fetchTasksAndGoals();
+    }
+  }, [status]);
 
-    fetchTasksAndGoals();
-  }, []);
+  const fetchTasksAndGoals = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Fetch goals
+      const goalsResponse = await fetch('/api/goals');
+      if (!goalsResponse.ok) {
+        throw new Error('Failed to fetch goals');
+      }
+      const goalsData = await goalsResponse.json();
+      setGoals(goalsData);
+      
+      // Fetch tasks
+      const tasksResponse = await fetch('/api/tasks');
+      if (!tasksResponse.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+      const tasksData = await tasksResponse.json();
+      
+      // Add goalTitle to tasks for easier display
+      const enhancedTasks = tasksData.map(task => {
+        const relatedGoal = goalsData.find(g => g._id === task.goalId);
+        return {
+          ...task,
+          goalTitle: relatedGoal ? relatedGoal.title : 'No Goal'
+        };
+      });
+      
+      setTasks(enhancedTasks);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching tasks and goals:', err);
+      setError('Failed to load tasks. Please try again.');
+      setLoading(false);
+    }
+  };
 
   // Apply filters and sort whenever tasks, filters, or search term changes
   useEffect(() => {
@@ -209,13 +166,35 @@ export default function TasksPage() {
     setSearchTerm('');
   };
 
-  const handleCompleteTask = (taskId, completed) => {
-    // In production, you would update this via API
-    setTasks(tasks.map(task => 
-      task._id === taskId ? { ...task, completed, completedAt: completed ? new Date() : null } : task
-    ));
-    
-    notification.showSuccess(`Task marked as ${completed ? 'completed' : 'incomplete'}`);
+  const handleCompleteTask = async (taskId, completed) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          completed,
+          completedAt: completed ? new Date() : null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update task');
+      }
+
+      const updatedTask = await response.json();
+      
+      // Update the task in the state
+      setTasks(tasks.map(task => 
+        task._id === taskId ? { ...updatedTask, goalTitle: task.goalTitle } : task
+      ));
+      
+      notification.showSuccess(`Task marked as ${completed ? 'completed' : 'incomplete'}`);
+    } catch (error) {
+      console.error('Error updating task:', error);
+      notification.showError('Failed to update task');
+    }
   };
 
   const handleEditTask = (task) => {
@@ -230,14 +209,20 @@ export default function TasksPage() {
     if (!confirmDelete) return;
 
     try {
-      // In production, call API to delete task
-      // await deleteTask(confirmDelete._id);
+      const response = await fetch(`/api/tasks/${confirmDelete._id}`, {
+        method: 'DELETE',
+      });
       
-      // Update local state for demo
+      if (!response.ok) {
+        throw new Error('Failed to delete task');
+      }
+      
+      // Update local state
       setTasks(tasks.filter(t => t._id !== confirmDelete._id));
       notification.showSuccess(`Task "${confirmDelete.title}" deleted successfully`);
       setConfirmDelete(null);
     } catch (error) {
+      console.error('Error deleting task:', error);
       notification.showError('Failed to delete task');
     }
   };
