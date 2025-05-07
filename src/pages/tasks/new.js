@@ -49,35 +49,35 @@ export default function NewTask() {
   // Load goals for the dropdown
   useEffect(() => {
     const fetchGoals = async () => {
-      // In production, fetch from API
-      setTimeout(() => {
-        const mockGoals = [
-          {
-            _id: 'g1',
-            title: 'Learn React and NextJS',
-          },
-          {
-            _id: 'g2',
-            title: 'Exercise Regularly',
-          },
-          {
-            _id: 'g3',
-            title: 'Read 20 Books',
-          },
-        ];
-        setGoals(mockGoals);
+      try {
+        setLoading(true);
+        // Fetch goals from API
+        const response = await fetch('/api/goals');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch goals: ${response.statusText}`);
+        }
+        
+        const goalsData = await response.json();
+        console.log('Fetched goals:', goalsData.length);
+        setGoals(goalsData);
         
         // If goalId is provided in query params, set it
         if (goalId) {
           setFormData(prev => ({ ...prev, goalId }));
         }
-        
+      } catch (error) {
+        console.error('Error fetching goals:', error);
+        notification.showError(`Failed to load goals: ${error.message}`);
+        // Set empty goals array to prevent errors
+        setGoals([]);
+      } finally {
         setLoading(false);
-      }, 500);
+      }
     };
     
     fetchGoals();
-  }, [goalId]);
+  }, [goalId, notification]);
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -140,11 +140,37 @@ export default function NewTask() {
     setIsSubmitting(true);
     
     try {
-      // In production, call API to create task
-      // await createTask(formData);
+      // Format the data for the API
+      const taskData = {
+        title: formData.title,
+        description: formData.description,
+        goalId: formData.goalId,
+        priority: formData.priority,
+        dueDate: formData.dueDate,
+        completed: formData.completed
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Submitting task data:', taskData);
+      
+      // Call API to create task
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData),
+      });
+      
+      console.log('API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
+        throw new Error(`Failed to create task: ${errorData.error || response.statusText}`);
+      }
+      
+      const createdTask = await response.json();
+      console.log('Created task:', createdTask);
       
       notification.showSuccess('Task created successfully');
       
@@ -155,7 +181,8 @@ export default function NewTask() {
         router.push('/tasks');
       }
     } catch (error) {
-      notification.showError('Failed to create task');
+      console.error('Error creating task:', error);
+      notification.showError(`Failed to create task: ${error.message}`);
       setIsSubmitting(false);
     }
   };

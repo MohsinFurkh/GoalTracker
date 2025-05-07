@@ -122,15 +122,34 @@ export default function NewJournalEntry() {
     setIsSubmitting(true);
     
     try {
-      // In production, call API to create journal entry
-      // await createJournalEntry(formData);
+      // Format data for the API
+      const journalData = {
+        title: formData.title,
+        content: formData.content,
+        date: formData.date,
+        mood: formData.mood,
+        tags: formData.tags,
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call API to create journal entry
+      const response = await fetch('/api/journals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(journalData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create journal entry');
+      }
+      
+      const createdJournal = await response.json();
       
       notification.showSuccess('Journal entry created successfully');
       router.push('/journal');
     } catch (error) {
+      console.error('Error creating journal entry:', error);
       notification.showError('Failed to create journal entry');
       setIsSubmitting(false);
     }

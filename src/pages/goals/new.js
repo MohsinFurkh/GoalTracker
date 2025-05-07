@@ -116,16 +116,43 @@ export default function NewGoal() {
     setIsSubmitting(true);
     
     try {
-      // In production, call API to create goal
-      // await createGoal(formData);
+      // Format the data for the API
+      const goalData = {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        priority: formData.priority,
+        categories: formData.categories,
+        deadline: formData.deadline,
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Submitting goal data:', goalData);
+      
+      // Call the API to create the goal
+      const response = await fetch('/api/goals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(goalData),
+      });
+      
+      console.log('API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
+        throw new Error(`Failed to create goal: ${errorData.error || response.statusText}`);
+      }
+      
+      const createdGoal = await response.json();
+      console.log('Created goal:', createdGoal);
       
       notification.showSuccess('Goal created successfully');
       router.push('/goals');
     } catch (error) {
-      notification.showError('Failed to create goal');
+      console.error('Error creating goal:', error);
+      notification.showError(`Failed to create goal: ${error.message}`);
       setIsSubmitting(false);
     }
   };
