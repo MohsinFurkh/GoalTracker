@@ -1,7 +1,6 @@
 import { getSession } from 'next-auth/react';
 import { getCollection, connectToDatabase } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { initializeDatabase } from '../../../lib/initDb';
 
 /**
  * Handler for goal API requests
@@ -22,11 +21,27 @@ export default async function handler(req, res) {
     const userId = session.user.id;
     console.log('Processing request for user:', userId);
 
-    // Ensure database is initialized
-    await initializeDatabase();
+    // Connect to database and get the goals collection
+    const { db } = await connectToDatabase();
+    const goalsCollection = db.collection('goals');
 
-    // Get the goals collection
-    const goalsCollection = await getCollection('goals');
+    // Ensure the collection exists
+    try {
+      await db.createCollection('goals');
+      console.log('Goals collection created or already exists');
+    } catch (error) {
+      // Collection might already exist, which is fine
+      console.log('Goals collection already exists or error:', error.message);
+    }
+
+    // Create indexes if they don't exist
+    try {
+      await goalsCollection.createIndex({ userId: 1 });
+      await goalsCollection.createIndex({ createdAt: -1 });
+      console.log('Created indexes for goals collection');
+    } catch (error) {
+      console.log('Indexes might already exist:', error.message);
+    }
 
     switch (req.method) {
       case 'GET':
