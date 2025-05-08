@@ -466,18 +466,18 @@ export default function GoalsPage() {
 // New goal creation logic
 const createNewGoal = async (userId, title, description, deadline, priority, categories, status) => {
   const newGoal = {
-    userId: new ObjectId(userId),
+    userId: new ObjectId(session.user.id),
     title,
     description: description || '',
     targetDate: deadline ? new Date(deadline) : null,
-    priority: (priority || 'medium').toLowerCase(),
-    category: categories?.[0] || 'personal',
-    status: status || 'active',
-    progress: 0,
+    priority: priority || 'Medium',
+    categories: categories || [],
+    status: status || 'Not Started',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   const result = await goalsCollection.insertOne(newGoal);
+  console.log('Insert result:', result);
   return result;
 };

@@ -8,18 +8,17 @@ import { ObjectId } from 'mongodb';
  * POST: Creates a new goal
  */
 export default async function handler(req, res) {
-  try {
-    // Get the user's session
+  if (req.method === 'POST') {
+    // Log the request body
+    console.log('Request body:', req.body);
+
+    // Retrieve and log the session data
     const session = await getSession({ req });
-    
-    // Check if user is authenticated
+    console.log('Session data:', session);
+
     if (!session || !session.user) {
-      console.log('Unauthorized: No valid session found');
       return res.status(401).json({ error: 'Unauthorized' });
     }
-
-    const userId = session.user.id;
-    console.log('Processing request for user:', userId);
 
     // Connect to database and get the goals collection
     const { db } = await connectToDatabase();
@@ -43,53 +42,60 @@ export default async function handler(req, res) {
       console.log('Indexes might already exist:', error.message);
     }
 
-    switch (req.method) {
-      case 'GET':
-        // Get all goals for the user
-        const goals = await goalsCollection
-          .find({ userId: new ObjectId(userId) })
-          .sort({ createdAt: -1 })
-          .toArray();
-        
-        console.log(`Found ${goals.length} goals for user ${userId}`);
-        return res.status(200).json(goals);
+    // Proceed with the rest of the logic for creating a goal
+    const { title, description, deadline, priority, categories, status } = req.body;
+    const newGoal = {
+      userId: new ObjectId(session.user.id),
+      title,
+      description: description || '',
+      targetDate: deadline ? new Date(deadline) : null,
+      priority: priority || 'Medium',
+      categories: categories || [],
+      status: status || 'Not Started',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-      case 'POST':
-        // Create a new goal
-        const { title, description, deadline, priority, categories, status } = req.body;
-        
-        if (!title) {
-          console.log('Bad request: Missing required fields');
-          return res.status(400).json({ error: 'Title is required' });
-        }
-
-        const newGoal = {
-          userId: new ObjectId(userId),
-          title,
-          description: description || '',
-          targetDate: deadline ? new Date(deadline) : null,
-          priority: (priority || 'medium').toLowerCase(),
-          category: categories?.[0] || 'personal', // Use first category or default
-          status: status || 'active',
-          progress: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
-        const result = await goalsCollection.insertOne(newGoal);
-        console.log('Created new goal with ID:', result.insertedId);
-        
-        return res.status(201).json({
-          ...newGoal,
-          _id: result.insertedId,
-        });
-
-      default:
-        console.log('Method not allowed:', req.method);
-        return res.status(405).json({ error: 'Method not allowed' });
+    try {
+      const result = await goalsCollection.insertOne(newGoal);
+      console.log('Insert result:', result);
+      return res.status(201).json(result);
+    } catch (error) {
+      console.error('Error inserting goal:', error);
+      return res.status(500).json({ error: 'Failed to create goal' });
     }
-  } catch (error) {
-    console.error('Error in goals API:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+  } else if (req.method === 'GET') {
+    try {
+      // Get the user's session
+      const session = await getSession({ req });
+
+      // Check if user is authenticated
+      if (!session || !session.user) {
+        console.log('Unauthorized: No valid session found');
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const userId = session.user.id;
+      console.log('Processing request for user:', userId);
+
+      // Connect to database and get the goals collection
+      const { db } = await connectToDatabase();
+      const goalsCollection = db.collection('goals');
+
+      // Get all goals for the user
+      const goals = await goalsCollection
+        .find({ userId: new ObjectId(userId) })
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      console.log(`Found ${goals.length} goals for user ${userId}`);
+      return res.status(200).json(goals);
+    } catch (error) {
+      console.error('Error in goals API:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  } else {
+    res.setHeader('Allow', ['GET', 'POST']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-} 
+}
