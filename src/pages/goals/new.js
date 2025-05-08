@@ -313,4 +313,4 @@ export default function NewGoal() {
       {isSubmitting && <LoadingState message="Creating goal..." fullPage />}
     </MainLayout>
   );
-} 
+}

@@ -64,6 +64,11 @@ export default function GoalsPage() {
 
   useEffect(() => {
     if (status === 'authenticated') {
+      const userId = session.user.id;
+      if (!userId) {
+        console.log('Unauthorized: No valid session found');
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
       fetchGoals();
     }
   }, [status]);
@@ -456,4 +461,23 @@ export default function GoalsPage() {
       />
     </MainLayout>
   );
-} 
+}
+
+// New goal creation logic
+const createNewGoal = async (userId, title, description, deadline, priority, categories, status) => {
+  const newGoal = {
+    userId: new ObjectId(userId),
+    title,
+    description: description || '',
+    targetDate: deadline ? new Date(deadline) : null,
+    priority: (priority || 'medium').toLowerCase(),
+    category: categories?.[0] || 'personal',
+    status: status || 'active',
+    progress: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const result = await goalsCollection.insertOne(newGoal);
+  return result;
+};
