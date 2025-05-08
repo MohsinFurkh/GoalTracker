@@ -62,6 +62,7 @@ export default function GoalsPage() {
   const [sortBy, setSortBy] = useState('deadline');
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  const isClient = typeof window !== 'undefined';
   useEffect(() => {
     if (status === "loading") setLoading(true);
     if (status === 'unauthenticated') return;
@@ -69,13 +70,15 @@ export default function GoalsPage() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      const userId = session.user.id;
-      if (!userId) {
-        console.log('Unauthorized: No valid session found');
-        return res.status(401).json({ error: 'Unauthorized' });
-      
-      }
-      fetchGoals();
+        if (isClient) {
+          const userId = session.user.id;
+          if (!userId) {
+              console.log('Unauthorized: No valid session found');
+              return res.status(401).json({ error: 'Unauthorized' });
+          
+          }
+          fetchGoals();
+        }
     }
   }, [status]);
 
