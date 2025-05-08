@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
       case 'POST':
         // Create a new goal
-        const { title, description, targetDate, priority, category } = req.body;
+        const { title, description, deadline, priority, categories, status } = req.body;
         
         if (!title) {
           console.log('Bad request: Missing required fields');
@@ -67,10 +67,10 @@ export default async function handler(req, res) {
           userId: new ObjectId(userId),
           title,
           description: description || '',
-          targetDate: targetDate ? new Date(targetDate) : null,
-          priority: priority || 'medium',
-          category: category || 'personal',
-          status: 'active',
+          targetDate: deadline ? new Date(deadline) : null,
+          priority: (priority || 'medium').toLowerCase(),
+          category: categories?.[0] || 'personal', // Use first category or default
+          status: status || 'active',
           progress: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
