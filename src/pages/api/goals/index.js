@@ -9,12 +9,20 @@ import { ObjectId } from 'mongodb';
  */
 export default async function handler(req, res) {
   if (req.method === 'POST') {
+    // Log that a request is being received to create a new goal
+    console.error('Receiving request to create a new goal');
+
     // Log the request body
     console.log('Request body:', req.body);
 
     // Retrieve and log the session data
     const session = await getSession({ req });
     console.log('Session data:', session);
+    
+    // Log if the user is authenticated
+    if (session && session.user && session.user.id) {
+      console.log(`User is authenticated with id: ${session.user.id}`);
+    }
 
     if (!session || !session.user) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -55,6 +63,9 @@ export default async function handler(req, res) {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    
+    //Log that we are creating a new goal
+    console.log('Creating a new goal');
 
     try {
       const result = await goalsCollection.insertOne(newGoal);
@@ -62,7 +73,7 @@ export default async function handler(req, res) {
       return res.status(201).json(result);
     } catch (error) {
       console.error('Error inserting goal:', error);
-      return res.status(500).json({ error: 'Failed to create goal' });
+      return res.status(500).json({ error: `Failed to create goal: ${error.message}` });
     }
   } else if (req.method === 'GET') {
     try {

@@ -123,12 +123,13 @@ export default function NewGoal() {
         status: formData.status,
         priority: formData.priority,
         categories: formData.categories,
-        deadline: formData.deadline,
+        deadline: formData.deadline ? formData.deadline.toISOString() : null,
       };
       
       console.log('Submitting goal data:', goalData);
       
       // Call the API to create the goal
+      console.log('Sending request to create new goal to API');
       const response = await fetch('/api/goals', {
         method: 'POST',
         headers: {
@@ -140,12 +141,28 @@ export default function NewGoal() {
       console.log('API response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error response:', errorData);
-        throw new Error(`Failed to create goal: ${errorData.error || response.statusText}`);
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.log('Server returned non-json response');
+          // If response is not JSON
+          const errorMessage = `Failed to create goal: Server returned non-JSON response - Status: ${response.status} - ${response.statusText}`;
+          console.error('Non-JSON Error:', errorMessage, jsonError);
+          throw new Error(errorMessage);
+        }
+        
+        // If we received JSON, but it has an 'error' property
+        if (errorData && errorData.error) {
+          throw new Error(`Failed to create goal: ${errorData.error}`);
+        } else {
+          throw new Error(`Failed to create goal: Status: ${response.status} - ${response.statusText}`);
+        }
       }
       
       const createdGoal = await response.json();
+
+      
       console.log('Created goal:', createdGoal);
       
       notification.showSuccess('Goal created successfully');
@@ -153,7 +170,11 @@ export default function NewGoal() {
     } catch (error) {
       console.error('Error creating goal:', error);
       notification.showError(`Failed to create goal: ${error.message}`);
+      
       setIsSubmitting(false);
+    } catch(fetchError){
+        console.error("Fetch error: ", fetchError);
+        notification.showError(`Fetch error: ${fetchError.message}`);
     }
   };
   
