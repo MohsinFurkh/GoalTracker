@@ -25,6 +25,8 @@ export default async function handler(req, res) {
     }
 
     if (!session || !session.user) {
+      console.error("Session is null");
+
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -51,8 +53,16 @@ export default async function handler(req, res) {
     }
 
     // Proceed with the rest of the logic for creating a goal
-    const { title, description, deadline, priority, categories, status } = req.body;
-    const newGoal = {
+    let newGoal
+    try{
+      console.log("session.user.id", session.user.id);
+      const { title, description, deadline, priority, categories, status } = req.body;
+      newGoal = {
+
+    } catch (error) {
+      console.error("There was an error with ObjectId", error);
+      return res.status(500).json({ error: `Failed to create goal: ${error.message}` });
+    }
       userId: new ObjectId(session.user.id),
       title,
       description: description || '',
@@ -62,7 +72,8 @@ export default async function handler(req, res) {
       status: status || 'Not Started',
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
+    console.log('newGoal object created');
     
     //Log that we are creating a new goal
     console.log('Creating a new goal');
