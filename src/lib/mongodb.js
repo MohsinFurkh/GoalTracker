@@ -1,57 +1,44 @@
 import { MongoClient } from 'mongodb';
 
-/**
- * Global variable to maintain the MongoDB connection across requests
- */
-let cachedClient = null;
-let cachedDb = null;
+if (!process.env.MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+}
 
-/**
- * Connect to MongoDB and return the client and database
- * This function reuses the connection if it already exists
- */
+const uri = process.env.MONGODB_URI;
+const options = {
+  useUnifiedTopology: true,
+  useNewUrlParser: true,
+};
+
+let client;
+let clientPromise;
+
+if (process.env.NODE_ENV === 'development') {
+  // In development mode, use a global variable so that the value
+  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect();
+  }
+  clientPromise = global._mongoClientPromise;
+} else {
+  // In production mode, it's best to not use a global variable.
+  client = new MongoClient(uri, options);
+  clientPromise = client.connect();
+}
+
+// Export a module-scoped MongoClient promise. By doing this in a
+// separate module, the client can be shared across functions.
+export { clientPromise };
+
 export async function connectToDatabase() {
-  // If we have a cached connection, return it
-  if (cachedClient && cachedDb) {
-    console.log('Using cached MongoDB connection');
-    return { client: cachedClient, db: cachedDb };
-  }
-
-  // If no connection exists, create a new one
-  if (!process.env.MONGODB_URI) {
-    console.error('MONGODB_URI environment variable is not defined');
-    throw new Error('Please define the MONGODB_URI environment variable');
-  }
-
-  console.log('Creating new MongoDB connection');
-  
   try {
-    // Connection URI masking for security in logs
-    const maskedURI = process.env.MONGODB_URI.replace(
-      /mongodb(\+srv)?:\/\/([^:]+):([^@]+)@/,
-      'mongodb$1://$2:****@'
-    );
-    console.log('Connecting to MongoDB with URI:', maskedURI);
-    
-    const client = new MongoClient(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    
-    console.log('Establishing MongoDB connection...');
-    await client.connect();
-    console.log('Connected to MongoDB successfully');
-    
+    const client = await clientPromise;
     const db = client.db();
-    console.log('Database selected:', db.databaseName);
-
-    // Cache the connection
-    cachedClient = client;
-    cachedDb = db;
-
+    console.log('Successfully connected to MongoDB.');
     return { client, db };
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+    console.error('Error connecting to MongoDB:', error);
     throw error;
   }
 }
@@ -63,7 +50,6 @@ export async function connectToDatabase() {
  */
 export async function getCollection(collectionName) {
   try {
-    console.log(`Getting collection: ${collectionName}`);
     const { db } = await connectToDatabase();
     return db.collection(collectionName);
   } catch (error) {

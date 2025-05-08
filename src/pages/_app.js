@@ -3,6 +3,12 @@ import { SessionProvider } from 'next-auth/react';
 import { NotificationProvider } from '../components/common/NotificationSystem';
 import theme from '../styles/theme';
 import Head from 'next/head';
+import { initializeDatabase } from '../lib/initDb';
+
+// Initialize database on app startup
+if (typeof window === 'undefined') {
+  initializeDatabase().catch(console.error);
+}
 
 /**
  * Custom App component that wraps the entire application
