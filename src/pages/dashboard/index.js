@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import {
   Box,
   Grid,
@@ -31,13 +30,12 @@ import LoadingState from '../../components/common/LoadingState';
 import { formatDate, getCurrentWeekAndYear } from '../../utils/dateUtils';
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [stats, setStats] = useState({
     totalGoals: 0,
-    completedGoals: 0,
+    completedGoals: 0, 
     completionRate: 0,
     weeklyTasks: 0,
     completedTasks: 0,
@@ -51,11 +49,9 @@ export default function Dashboard() {
 
   // Fetch dashboard data from APIs
   useEffect(() => {
-    if (status === 'authenticated') {
-      fetchDashboardData();
-    }
-  }, [status]);
-
+    fetchDashboardData();
+  }, []);
+  
   const fetchDashboardData = async () => {
     setLoading(true);
     setError('');
@@ -239,13 +235,13 @@ export default function Dashboard() {
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <MainLayout>
         <LoadingState message="Loading dashboard..." />
       </MainLayout>
     );
-  }
+  } 
 
   return (
     <MainLayout>
@@ -253,7 +249,7 @@ export default function Dashboard() {
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
           Welcome back, {session?.user?.name || 'User'}!
-        </Typography>
+        </Typography> 
         <Typography variant="body1" color="text.secondary">
           Here's an overview of your goals and upcoming tasks.
         </Typography>
