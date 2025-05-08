@@ -49,18 +49,23 @@ export default function GoalsPage() {
   const notification = useNotification();
   const { data: session, status } = useSession();
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [goals, setGoals] = useState([]);
   const [filteredGoals, setFilteredGoals] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: 'all',
-    priority: 'all',
-    category: 'all',
+      priority: 'all',
+      category: 'all',
   });
   const [sortBy, setSortBy] = useState('deadline');
   const [confirmDelete, setConfirmDelete] = useState(null);
+
+  useEffect(() => {
+    if (status === "loading") setLoading(true);
+    if (status === 'unauthenticated') return;
+  }, [status]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -68,6 +73,7 @@ export default function GoalsPage() {
       if (!userId) {
         console.log('Unauthorized: No valid session found');
         return res.status(401).json({ error: 'Unauthorized' });
+      
       }
       fetchGoals();
     }
@@ -75,7 +81,6 @@ export default function GoalsPage() {
 
   const fetchGoals = async () => {
     setLoading(true);
-    setError('');
     
     try {
       const response = await fetch('/api/goals');
@@ -86,6 +91,7 @@ export default function GoalsPage() {
       
       const data = await response.json();
       setGoals(data);
+      setError('');
       setLoading(false);
     } catch (err) {
       console.error('Error fetching goals:', err);
@@ -278,6 +284,15 @@ export default function GoalsPage() {
     );
   }
 
+  if (status === 'unauthenticated'){
+      return (
+          <MainLayout>
+              <Typography>
+                  Unauthorized
+              </Typography>
+          </MainLayout>
+      )
+  }
   return (
     <MainLayout>
       <PageHeader
