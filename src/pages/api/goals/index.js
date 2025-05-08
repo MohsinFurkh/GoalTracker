@@ -53,37 +53,32 @@ export default async function handler(req, res) {
     }
 
     // Proceed with the rest of the logic for creating a goal
-    let newGoal
     try{
       console.log("session.user.id", session.user.id);
       const { title, description, deadline, priority, categories, status } = req.body;
-      newGoal = {
-
-    } catch (error) {
-      console.error("There was an error with ObjectId", error);
-      return res.status(500).json({ error: `Failed to create goal: ${error.message}` });
-    }
-      userId: new ObjectId(session.user.id),
-      title,
-      description: description || '',
-      targetDate: deadline ? new Date(deadline) : null,
-      priority: priority || 'Medium',
-      categories: categories || [],
-      status: status || 'Not Started',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-    console.log('newGoal object created');
-    
-    //Log that we are creating a new goal
-    console.log('Creating a new goal');
-
-    try {
+      const newGoal = {
+        userId: new ObjectId(session.user.id),
+        title,
+        description: description || '',
+        targetDate: deadline ? new Date(deadline) : null,
+        priority: priority || 'Medium',
+        categories: categories || [],
+        status: status || 'Not Started',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      console.log('newGoal object created');
+      
+      //Log that we are creating a new goal
+      console.log('Creating a new goal');
       const result = await goalsCollection.insertOne(newGoal);
       console.log('Insert result:', result);
       return res.status(201).json(result);
     } catch (error) {
-      console.error('Error inserting goal:', error);
+      console.error("There was an error with ObjectId", error);
+      if (error.message.includes("Argument passed in must be a string of 12 bytes or a string of 24 hex characters or an integer")) {
+        return res.status(400).json({ error: `Failed to create goal: Invalid user Id` });
+      }
       return res.status(500).json({ error: `Failed to create goal: ${error.message}` });
     }
   } else if (req.method === 'GET') {
