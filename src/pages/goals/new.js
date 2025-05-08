@@ -167,15 +167,12 @@ export default function NewGoal() {
       
       notification.showSuccess('Goal created successfully');
       router.push('/goals');
-    } catch (error) {
+    } catch (error) { //This catch block handles errors in fetch method and also in the try block
       console.error('Error creating goal:', error);
-      notification.showError(`Failed to create goal: ${error.message}`);
-      
-      setIsSubmitting(false);
-    } catch(fetchError){
-        console.error("Fetch error: ", fetchError);
-        notification.showError(`Fetch error: ${fetchError.message}`);
+      notification.showError(`Failed to create goal: ${error.message}`);      
     }
+      
+    setIsSubmitting(false);
   };
   
   return (
