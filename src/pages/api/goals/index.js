@@ -1,4 +1,4 @@
-import { getToken } from 'next-auth/jwt';
+import { getToken, } from 'next-auth/jwt';
 import { jwt } from 'next-auth/jwt';
 import { getCollection, connectToDatabase } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
@@ -96,16 +96,33 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'GET') {
     try {
-     // Get the user's session
-      const session = await getSession({ req });
+      console.log('GET method called');
+      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-      // Check if user is authenticated
+      let session = null;
+      if (token) {
+        session = {
+          user: {
+            id: token.id,
+            email: token.email,
+          },
+        };
+        console.log("Token is available: ", token);
+      } else {
+        console.log("Token is not available");
+      }
+      console.log('Session data:', session);
+
       if (!session || !session.user) {
-        console.log('Unauthorized: No valid session found');
+        console.error("Session is null");
+
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const userId = session.user.id;
+
+      
+
+      const userId = session.user.id;      
       console.log('Processing request for user:', userId);
 
       // Connect to database and get the goals collection
