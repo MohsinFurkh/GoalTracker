@@ -1,6 +1,6 @@
 import { getToken } from 'next-auth/jwt';
 import { jwt } from 'next-auth/jwt';
-import { getCollection, connectToDatabase } from '../../../../lib/mongodb';
+import { getCollection, connectToDatabase } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 /**
