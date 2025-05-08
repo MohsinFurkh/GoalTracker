@@ -28,7 +28,7 @@ import BookIcon from '@mui/icons-material/Book';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 
 const drawerWidth = 240;
 
@@ -41,7 +41,6 @@ const navigation = [
 ];
 
 export default function MainLayout({ children }) {
-  const { data: session } = useSession();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -117,38 +116,10 @@ export default function MainLayout({ children }) {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {navigation.find((item) => item.href === router.pathname)?.name || 'GoalTrackr'}
           </Typography>
-          {session ? (
-            <>
-              <IconButton
-                onClick={handleProfileMenuOpen}
-                size="small"
-                sx={{ ml: 2 }}
-                aria-controls="profile-menu"
-                aria-haspopup="true"
-              >
-                {session.user.image ? (
-                  <Avatar alt={session.user.name} src={session.user.image} />
-                ) : (
-                  <Avatar alt={session.user.name}>
-                    {session.user.name?.[0] || 'U'}
-                  </Avatar>
-                )}
-              </IconButton>
-              <Menu
-                id="profile-menu"
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleProfileMenuClose}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-              >
-                <MenuItem onClick={handleProfileClick}>
+          <Button color="inherit" onClick={() => router.push('/auth/signin')}>
+              Login
+            </Button>
+            {/* <MenuItem onClick={handleProfileClick}>
                   <ListItemIcon>
                     <AccountCircleIcon fontSize="small" />
                   </ListItemIcon>
@@ -160,13 +131,7 @@ export default function MainLayout({ children }) {
                   </ListItemIcon>
                   <ListItemText>Logout</ListItemText>
                 </MenuItem>
-              </Menu>
-            </>
-          ) : (
-            <Button color="inherit" onClick={() => router.push('/auth/signin')}>
-              Login
-            </Button>
-          )}
+              </Menu> */}
         </Toolbar>
       </AppBar>
       <Box
