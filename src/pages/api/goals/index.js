@@ -1,4 +1,5 @@
-import { getSession } from 'next-auth/react';
+import { getToken } from 'next-auth/jwt';
+import { jwt } from 'next-auth/jwt';
 import { getCollection, connectToDatabase } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -9,26 +10,32 @@ import { ObjectId } from 'mongodb';
  */
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    console.log('getSession called');
+    console.log('POST method called');
 
     // Log that a request is being received to create a new goal
     console.error('Receiving request to create a new goal');
 
     // Log the request body
     console.log('Request body:', req.body);
+    
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-    // Retrieve and log the session data
-    
-    
-    const session = await getSession({ req });
-    console.log('Session data:', session);
-    
-    // Log if the user is authenticated
-    if (session && session.user && session.user.id) {
-      console.log(`User is authenticated with id: ${session.user.id}`);
+    let session = null;
+    if (token) {
+      session = {
+        user: {
+          id: token.id,
+          email: token.email,
+        },
+      };
+      console.log("Token is available: ", token);
+    } else {
+      console.log("Token is not available");
     }
-
-    console.log('session.user', session.user);
+    console.log('Session data:', session);
+      
+    
+      
 
     if (!session || !session.user) {
       console.error("Session is null");
@@ -61,7 +68,7 @@ export default async function handler(req, res) {
     // Proceed with the rest of the logic for creating a goal
     try{
       console.log("session.user.id", session.user.id);
-      const { title, description, deadline, priority, categories, status } = req.body;
+      const { title, description, deadline, priority, categories, status } = req.body;      
       const newGoal = {
         userId: new ObjectId(session.user.id),
         title,
@@ -89,7 +96,7 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'GET') {
     try {
-      // Get the user's session
+     // Get the user's session
       const session = await getSession({ req });
 
       // Check if user is authenticated
