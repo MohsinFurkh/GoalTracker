@@ -8,6 +8,14 @@ const uri = process.env.MONGODB_URI;
 const options = {
   useUnifiedTopology: true,
   useNewUrlParser: true,
+  connectTimeoutMS: 30000,
+  socketTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 30000,
+  maxPoolSize: 10,
+  minPoolSize: 5,
+  maxIdleTimeMS: 30000,
+  retryWrites: true,
+  retryReads: true,
 };
 
 let client;
@@ -39,7 +47,18 @@ export async function connectToDatabase() {
     return { client, db };
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
-    throw error;
+    // Add a small delay before retrying
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Retry the connection
+    try {
+      const client = await clientPromise;
+      const db = client.db();
+      console.log('Successfully reconnected to MongoDB after retry.');
+      return { client, db };
+    } catch (retryError) {
+      console.error('Error reconnecting to MongoDB after retry:', retryError);
+      throw retryError;
+    }
   }
 }
 
