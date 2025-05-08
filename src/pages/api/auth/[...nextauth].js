@@ -43,30 +43,6 @@ export default NextAuth({
           // If no user found with this email
           if (!user) {
             console.log('No user found with email:', credentials.email);
-            
-            // Demo user only for specific credentials
-            if (credentials.email === 'user@example.com' && credentials.password === 'password123') {
-              console.log('Creating demo user');
-              const hashedPassword = await bcrypt.hash('password123', 10);
-              const newUser = {
-                name: 'Demo User',
-                email: 'user@example.com',
-                passwordHash: hashedPassword,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              };
-              
-              const result = await usersCollection.insertOne(newUser);
-              console.log('Demo user created with ID:', result.insertedId);
-              
-              return {
-                id: result.insertedId.toString(),
-                name: newUser.name,
-                email: newUser.email,
-                createdAt: newUser.createdAt,
-              };
-            }
-            
             return null;
           }
           
@@ -131,23 +107,19 @@ export default NextAuth({
     signIn: '/auth/signin',
     error: '/auth/error',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
+  secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
   // Events allow running code at specific points in the auth flow
   events: {
     async signIn({ user, account, isNewUser }) {
-      // This runs when a user signs in
       console.log(`User signed in: ${user.email}`);
     },
     async createUser({ user }) {
-      // This runs when a new user is created by NextAuth (not our API endpoint)
       console.log(`New user created by NextAuth: ${user.email}`);
       
       try {
-        // Get the users collection
         const usersCollection = await getCollection('users');
         
-        // Add default settings if they don't exist
         await usersCollection.updateOne(
           { _id: new ObjectId(user.id) },
           { 
