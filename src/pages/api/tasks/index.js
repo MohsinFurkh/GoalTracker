@@ -1,4 +1,5 @@
-import { getSession } from 'next-auth/react';
+import { getToken } from 'next-auth/jwt';
+import { jwt } from 'next-auth/jwt';
 import { getCollection } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -8,12 +9,28 @@ import { ObjectId } from 'mongodb';
  * POST: Creates a new task
  */
 export default async function handler(req, res) {
-  const session = await getSession({ req });
+  console.log('Tasks API called with method:', req.method);
+  
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  let session = null;
+  if (token) {
+    session = {
+      user: {
+        id: token.id,
+        email: token.email,
+      },
+    };
+    console.log("Token is available: ", token);
+  } else {
+    console.log("Token is not available");
+  }
   
   // Check authentication
-  if (!session) {
+  if (!session || !session.user) {
+    console.error("Session is null");
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  
   
   try {
     const tasksCollection = await getCollection('tasks');
@@ -25,7 +42,7 @@ export default async function handler(req, res) {
         const { goalId, status, priority } = req.query;
         
         // Build the query object
-        const query = { userId: session.user.id };
+        const query = { userId: new ObjectId(session.user.id) };
         
         if (goalId) {
           query.goalId = goalId;
@@ -55,7 +72,7 @@ export default async function handler(req, res) {
         // Create a new task
         const newTask = {
           ...req.body,
-          userId: session.user.id,
+          userId: new ObjectId(session.user.id),
           completed: false,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -77,6 +94,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
   } catch (error) {
+    console.error("Error in tasks API: ", error);
     console.error('API Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
